@@ -1,8 +1,19 @@
 // Core type definitions shared between frontend and backend
 
-export type SkillType = 'medical' | 'logistics' | 'survey' | 'rescue' | 'engineering' | 'communication';
+export type SkillType =
+  | 'medical'
+  | 'logistics'
+  | 'survey'
+  | 'rescue'
+  | 'engineering'
+  | 'communication';
 
-export type TaskType = 'Survey' | 'Distribution' | 'Medical' | 'Rescue' | 'Infrastructure';
+export type TaskType =
+  | 'Survey'
+  | 'Distribution'
+  | 'Medical'
+  | 'Rescue'
+  | 'Infrastructure';
 
 export type StaffStatus = 'idle' | 'busy' | 'rest' | 'unavailable';
 
@@ -16,7 +27,7 @@ export interface Task {
   id: string;
   type: TaskType;
   requiredSkills: SkillType[];
-  urgency: number; // 1-10
+  urgency: number; // 1–10
   location: Location;
   timeWindow?: {
     start: number;
@@ -26,7 +37,7 @@ export interface Task {
   assignedStaffId?: string;
   status: 'pending' | 'queued' | 'assigned' | 'in-progress' | 'completed';
   createdAt: number;
-  priority?: number; // calculated
+  priority?: number;
 }
 
 export interface Staff {
@@ -36,8 +47,8 @@ export interface Staff {
   location: Location;
   status: StaffStatus;
   availability: boolean;
-  capacity: number; // max concurrent tasks
-  currentTasks: string[]; // task IDs
+  capacity: number;
+  currentTasks: string[];
   assignedTasksHistory: string[];
 }
 
@@ -50,8 +61,8 @@ export interface GraphNode {
 export interface GraphEdge {
   from: string;
   to: string;
-  distance: number; // km
-  travelTime: number; // minutes
+  distance: number;
+  travelTime: number;
 }
 
 export interface Graph {
@@ -60,45 +71,66 @@ export interface Graph {
 }
 
 export interface SimulationConfig {
-  urgencyWeight: number; // 0-1
-  distanceWeight: number; // 0-1
-  skillStrictness: number; // 0-1 (1 = must match all skills)
+  urgencyWeight: number;
+  distanceWeight: number;
+  skillStrictness: number;
   maxWorkloadPerStaff: number;
-  disasterSeverity: number; // multiplier
-  tickInterval: number; // ms
+  disasterSeverity: number;
+  tickInterval: number;
+}
+
+export interface SimulationMetrics {
+  tasksCompleted: number;
+  tasksAssigned: number;
+  tasksPending: number;
+  averageResponseTime: number;
 }
 
 export interface SimulationState {
   tick: number;
   tasks: Map<string, Task>;
   staff: Map<string, Staff>;
-  taskQueue: string[]; // FIFO queue of task IDs
-  priorityQueue: Array<{ taskId: string; priority: number }>; // Heap
+  taskQueue: string[];
+  priorityQueue: Array<{ taskId: string; priority: number }>;
   graph: Graph;
   config: SimulationConfig;
-  metrics: {
-    tasksCompleted: number;
-    tasksAssigned: number;
-    tasksPending: number;
-    averageResponseTime: number;
+  metrics: SimulationMetrics & {
     staffUtilization: number;
   };
 }
 
+// ✅ Serializable (socket-safe) version
+export interface SerializableSimulationState {
+  tasks: Task[];
+  staff: Staff[];
+  graph: {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+  };
+  tick: number;
+  taskQueue: string[];
+  priorityQueue: Array<{ taskId: string; priority: number }>;
+  config: SimulationConfig;
+  metrics: SimulationMetrics;
+}
+
+// ✅ THIS is the correct assignment type
 export interface Assignment {
   taskId: string;
   staffId: string;
   reason: string;
   travelDistance: number;
-  skillMatch: number; // 0-1
+  skillMatch: number;
 }
 
 // WebSocket Events
 export interface ServerToClientEvents {
-  stateUpdate: (state: Partial<SimulationState>) => void;
+  stateUpdate: (state: SerializableSimulationState) => void;
   taskAssigned: (assignment: Assignment) => void;
   simulationTick: (tick: number) => void;
-  error: (error: string) => void;
+  simulationPaused: () => void;
+  simulationResumed: () => void;
+  error: (message: string) => void;
 }
 
 export interface ClientToServerEvents {

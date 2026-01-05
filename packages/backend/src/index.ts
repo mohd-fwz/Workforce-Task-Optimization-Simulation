@@ -7,7 +7,12 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { SimulationEngine } from './engine/SimulationEngine.js';
-import { ServerToClientEvents, ClientToServerEvents } from '@workforce/shared';
+import {
+  ServerToClientEvents,
+  ClientToServerEvents,
+  SerializableSimulationState
+} from '@workforce/shared';
+
 
 const app = express();
 const httpServer = createServer(app);
@@ -40,7 +45,10 @@ io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
   // Send initial state
-  socket.emit('stateUpdate', simulation.getSerializableState());
+  socket.emit(
+    'stateUpdate', 
+    simulation.getSerializableState() as SerializableSimulationState
+);
 
   // Create task
   socket.on('createTask', (taskData) => {
