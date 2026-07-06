@@ -12,12 +12,14 @@ A real-time, educational simulation dashboard for NGO emergency response and wor
   - **Priority Queue (Min Heap)** - Binary tree visualization
   - **FIFO Queue** - Animated conveyor belt display
   - **Location Graph** - Interactive force-directed network
+  - **Algorithm Trace** - Step-by-step priority scoring, staff evaluation, and Dijkstra exploration
   - **Geographic Map** - Leaflet map with staff and task markers
 - **Parameter Tuning** - Adjust weights and see instant effects:
   - Urgency vs Distance weighting
   - Skill strictness
   - Max workload per staff
   - Disaster severity multiplier
+- **Decision Transparency** - Inspect why tasks are prioritized, why staff are selected or rejected, and how shortest paths are reconstructed
 
 ### Technical Highlights
 - ✅ **Min Heap** implementation for priority queue
@@ -141,9 +143,10 @@ Staff status indicators:
 Toggle between views to see how algorithms work:
 
 - **Heap Tab**: Binary tree showing priority queue structure
-  - Top node = highest priority task
+  - Top node = highest computed priority task
+  - The displayed priority score is converted to a negative heap key so the min heap extracts urgent work first
   - Purple = root node
-  - Numbers = priority values
+  - Numbers = computed priority scores
 
 - **Queue Tab**: FIFO conveyor belt
   - Left = out (to priority queue)
@@ -154,7 +157,15 @@ Toggle between views to see how algorithms work:
   - Green = bases
   - Blue = staff
   - Red = task sites
+  - Amber = latest reconstructed shortest path
   - Drag nodes to rearrange
+
+- **Algorithm Tab**: Educational decision trace
+  - Priority formula factors for queued tasks
+  - Candidate staff scores and rejection reasons
+  - Skill match, distance score, combined score
+  - Dijkstra steps: current node, neighbor updates, frontier, visited nodes, and final path
+  - Expanded modal with step playback and a larger readable trace
 
 - **Raw Data Tab**: JSON view of all structures
 
@@ -162,10 +173,13 @@ Toggle between views to see how algorithms work:
 
 Geographic visualization showing:
 - **Markers**: Color-coded locations
-- **Edges**: Distance connections (gray)
-- **Assignments**: Purple dashed lines from staff → task
+- **Solid gray lines**: Graph connections available to the pathfinding algorithm
+- **Solid amber line**: Latest shortest route reconstructed by Dijkstra's algorithm
+- **Animated violet dashed line**: Edge currently being explored in the selected Dijkstra step
+- **Dotted purple lines**: Current staff-to-task assignments
+- **Algorithm node states**: Violet = current node, green = visited, blue = frontier, amber = distance updated
 
-Click markers for details. Map auto-fits to show all locations.
+Click markers for details. Map auto-fits to show all locations. When the Algorithm tab or expanded analysis modal changes the selected Dijkstra step, the map updates in sync so the textual reasoning and geographic exploration can be studied together.
 
 ### 6. Metrics Panel
 
@@ -181,12 +195,14 @@ Real-time KPIs:
 ### Priority Calculation
 ```typescript
 priority = (urgency / 10) × urgencyWeight × timeFactor × unmetNeed × disasterSeverity
+heapKey = -priority
 ```
 
 **Factors:**
 - **urgency**: User-defined 1-10 scale
 - **timeFactor**: Increases as deadline approaches (1.0 → 2.0)
 - **unmetNeed**: Grows linearly with wait time (1.0 → 2.0 over 24hrs)
+- **heapKey**: The negative priority score used internally so the min heap extracts the highest computed priority first
 
 ### Staff Matching Algorithm
 
@@ -194,13 +210,15 @@ For each high-priority task:
 1. Filter available staff (under capacity, idle)
 2. Calculate **skill match** score (0-1)
 3. Reject if below skill strictness threshold
-4. Find **shortest path** using Dijkstra's algorithm
+4. Find **shortest path** using Dijkstra's algorithm and record each exploration step
 5. Compute combined score:
    ```
    score = (skillMatch × 100) + (distanceScore × 100)
    where distanceScore = 1 / (1 + distance × distanceWeight)
    ```
 6. Assign to best-scoring staff
+
+The Algorithm tab shows each evaluated candidate, the rejection reason when a candidate fails, the priority queue state, and the Dijkstra frontier/visited sets that led to the final route.
 
 ## Customization
 

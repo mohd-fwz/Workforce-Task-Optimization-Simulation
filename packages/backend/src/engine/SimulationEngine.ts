@@ -11,6 +11,10 @@ import {
   SimulationState,
   Assignment,
   GraphNode,
+  AlgorithmTrace,
+  QueuePromotionTrace,
+  AssignmentDecisionTrace,
+  PriorityCalculationTrace,
 } from '@workforce/shared';
 import { MinHeap } from '../dataStructures/MinHeap.js';
 import { Queue } from '../dataStructures/Queue.js';
@@ -27,6 +31,7 @@ export class SimulationEngine extends EventEmitter {
   private config: SimulationConfig;
   private isRunning: boolean = false;
   private tickTimer: NodeJS.Timeout | null = null;
+  private algorithmTrace: AlgorithmTrace = this.createEmptyTrace(0);
 
   constructor(config?: Partial<SimulationConfig>) {
     super();
@@ -60,6 +65,15 @@ export class SimulationEngine extends EventEmitter {
     this.graph.addEdge('base-1', 'base-2', 7.2);
     this.graph.addEdge('base-2', 'base-3', 14.5);
     this.graph.addEdge('base-1', 'base-3', 8.8);
+  }
+
+  private createEmptyTrace(tick: number): AlgorithmTrace {
+    return {
+      tick,
+      queuePromotions: [],
+      priorityCalculations: [],
+      assignmentDecisions: [],
+    };
   }
 
   /**
@@ -126,6 +140,7 @@ export class SimulationEngine extends EventEmitter {
    */
   private processTick(): void {
     this.tick++;
+    this.algorithmTrace = this.createEmptyTrace(this.tick);
 
     // 1. Update staff availability (simulate task completion)
     this.updateStaffAvailability();
@@ -182,9 +197,15 @@ export class SimulationEngine extends EventEmitter {
         const task = this.tasks.get(taskId);
         if (task) {
           task.status = 'queued';
-          const priority = AllocationEngine.calculatePriority(task, this.config, Date.now());
-          task.priority = priority;
-          this.priorityQueue.insert(priority, taskId);
+          const priorityTrace = AllocationEngine.calculatePriorityTrace(task, this.config, Date.now());
+          task.priority = priorityTrace.priorityScore;
+          this.priorityQueue.insert(priorityTrace.heapKey, taskId);
+          this.algorithmTrace.queuePromotions.push({
+            taskId,
+            taskType: task.type,
+            priority: priorityTrace,
+          });
+          this.algorithmTrace.priorityCalculations.push(priorityTrace);
         }
       }
     }
@@ -200,9 +221,10 @@ export class SimulationEngine extends EventEmitter {
     for (const { data: taskId } of tasks) {
       const task = this.tasks.get(taskId);
       if (task && task.status === 'queued') {
-        const priority = AllocationEngine.calculatePriority(task, this.config, Date.now());
-        task.priority = priority;
-        this.priorityQueue.insert(priority, taskId);
+        const priorityTrace = AllocationEngine.calculatePriorityTrace(task, this.config, Date.now());
+        task.priority = priorityTrace.priorityScore;
+        this.priorityQueue.insert(priorityTrace.heapKey, taskId);
+        this.algorithmTrace.priorityCalculations.push(priorityTrace);
       }
     }
   }
@@ -230,27 +252,40 @@ export class SimulationEngine extends EventEmitter {
         continue;
       }
 
-      console.log(`[ASSIGN] Trying to assign task ${task.type} (priority: ${topTask.priority.toFixed(2)}, skills: ${task.requiredSkills.join(',')})`);
+      const priorityScore = task.priority ?? -topTask.priority;
+      console.log(`[ASSIGN] Trying to assign task ${task.type} (priority: ${priorityScore.toFixed(2)}, skills: ${task.requiredSkills.join(',')})`);
 
-      const result = AllocationEngine.findBestStaff(task, availableStaff, this.graph, this.config);
+      const result = AllocationEngine.findBestStaffWithTrace(
+        task,
+        availableStaff,
+        this.graph,
+        this.config,
+        this.tick,
+        priorityScore,
+        topTask.priority
+      );
 
-      if (result) {
+      this.recordAssignmentDecision(result.decision);
+
+      if (result.staff && result.assignment) {
+        const assignedStaff = result.staff;
+
         // Assign task to staff
         this.priorityQueue.extractMin();
         task.status = 'assigned';
-        task.assignedStaffId = result.staff.id;
+        task.assignedStaffId = assignedStaff.id;
 
-        result.staff.currentTasks.push(task.id);
-        result.staff.assignedTasksHistory.push(task.id);
-        result.staff.status = 'busy';
+        assignedStaff.currentTasks.push(task.id);
+        assignedStaff.assignedTasksHistory.push(task.id);
+        assignedStaff.status = 'busy';
 
         // Remove from available staff
-        const staffIndex = availableStaff.findIndex(s => s.id === result.staff.id);
+        const staffIndex = availableStaff.findIndex(s => s.id === assignedStaff.id);
         if (staffIndex !== -1) {
           availableStaff.splice(staffIndex, 1);
         }
 
-        console.log(`[ASSIGN] ✅ Assigned ${task.type} to ${result.staff.name}`);
+        console.log(`[ASSIGN] ✅ Assigned ${task.type} to ${assignedStaff.name}`);
         this.emit('taskAssigned', result.assignment);
         assignmentsMade++;
       } else {
@@ -261,6 +296,31 @@ export class SimulationEngine extends EventEmitter {
     }
 
     console.log(`[ASSIGN] Total assignments made this tick: ${assignmentsMade}`);
+  }
+
+  private recordAssignmentDecision(decision: AssignmentDecisionTrace): void {
+    this.algorithmTrace.assignmentDecisions.push(decision);
+
+    const selectedEvaluation = decision.evaluations.find(
+      evaluation => evaluation.staffId === decision.selectedStaffId
+    );
+
+    if (selectedEvaluation?.pathTrace) {
+      this.algorithmTrace.latestDijkstraTrace = selectedEvaluation.pathTrace;
+    }
+
+    if (
+      decision.selectedStaffId &&
+      selectedEvaluation?.pathTrace?.found &&
+      selectedEvaluation.pathTrace.distance !== null
+    ) {
+      this.algorithmTrace.latestShortestPath = {
+        taskId: decision.taskId,
+        staffId: decision.selectedStaffId,
+        path: selectedEvaluation.pathTrace.finalPath,
+        distance: selectedEvaluation.pathTrace.distance,
+      };
+    }
   }
 
   /**
@@ -382,8 +442,9 @@ export class SimulationEngine extends EventEmitter {
       if (task) {
         task.status = 'queued';
         task.assignedStaffId = undefined;
-        const priority = AllocationEngine.calculatePriority(task, this.config, Date.now());
-        this.priorityQueue.insert(priority, taskId);
+        const priorityTrace = AllocationEngine.calculatePriorityTrace(task, this.config, Date.now());
+        task.priority = priorityTrace.priorityScore;
+        this.priorityQueue.insert(priorityTrace.heapKey, taskId);
       }
     }
 
@@ -411,13 +472,21 @@ export class SimulationEngine extends EventEmitter {
       tasks: this.tasks, // Keep as Map for backend
       staff: this.staff, // Keep as Map for backend
       taskQueue: this.taskQueue.toArray(),
-      priorityQueue: this.priorityQueue.toArray().map(n => ({ taskId: n.data, priority: n.priority })),
+      priorityQueue: this.priorityQueue.toArray().map(n => {
+        const task = this.tasks.get(n.data);
+        return {
+          taskId: n.data,
+          priority: task?.priority ?? -n.priority,
+          heapKey: n.priority,
+        };
+      }),
       graph: {
         nodes: this.graph.nodes,
         edges: this.graph.getEdges(),
       },
       config: this.config,
       metrics: AllocationEngine.calculateMetrics(this.tasks, this.staff),
+      algorithmTrace: this.algorithmTrace,
     };
   }
 

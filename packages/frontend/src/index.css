@@ -64,6 +64,19 @@ code {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+.algorithm-edge-flow {
+  animation: algorithm-edge-flow 1s linear infinite;
+}
+
+@keyframes algorithm-edge-flow {
+  from {
+    stroke-dashoffset: 16;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @keyframes slide-in {
   from {
     transform: translateX(-100%);

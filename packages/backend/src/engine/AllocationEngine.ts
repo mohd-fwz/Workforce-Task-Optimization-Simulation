@@ -3,7 +3,16 @@
  * Matches staff to tasks based on priority, skills, distance, and availability
  */
 
-import { Task, Staff, SimulationConfig, Assignment, SkillType } from '@workforce/shared';
+import {
+  Task,
+  Staff,
+  SimulationConfig,
+  Assignment,
+  SkillType,
+  PriorityCalculationTrace,
+  AssignmentDecisionTrace,
+  StaffEvaluationTrace,
+} from '@workforce/shared';
 import { Graph } from '../dataStructures/Graph.js';
 
 export class AllocationEngine {
@@ -11,18 +20,40 @@ export class AllocationEngine {
    * Calculate task priority based on multiple factors
    */
   static calculatePriority(task: Task, config: SimulationConfig, currentTime: number): number {
+    return this.calculatePriorityTrace(task, config, currentTime).priorityScore;
+  }
+
+  /**
+   * Calculate task priority and expose each formula factor for teaching.
+   */
+  static calculatePriorityTrace(
+    task: Task,
+    config: SimulationConfig,
+    currentTime: number
+  ): PriorityCalculationTrace {
     const timeFactor = this.getTimeFactor(task, currentTime);
     const unmetNeed = this.getUnmetNeedFactor(task);
+    const urgencyNormalized = task.urgency / 10;
 
-    // Priority = urgency × timeFactor × unmetNeed × disasterSeverity
-    const priority =
-      (task.urgency / 10) *
+    const priorityScore =
+      urgencyNormalized *
       config.urgencyWeight *
       timeFactor *
       unmetNeed *
       config.disasterSeverity;
 
-    return priority;
+    return {
+      taskId: task.id,
+      taskType: task.type,
+      urgencyNormalized,
+      urgencyWeight: config.urgencyWeight,
+      timeFactor,
+      unmetNeed,
+      disasterSeverity: config.disasterSeverity,
+      priorityScore,
+      heapKey: -priorityScore,
+      explanation: 'Higher computed priority becomes a lower heap key, so the min-heap extracts it first.',
+    };
   }
 
   /**
@@ -60,36 +91,103 @@ export class AllocationEngine {
     graph: Graph,
     config: SimulationConfig
   ): { staff: Staff; assignment: Assignment } | null {
-    if (availableStaff.length === 0) return null;
+    const detailed = this.findBestStaffWithTrace(task, availableStaff, graph, config, 0, 0, 0);
+    if (!detailed.staff || !detailed.assignment) return null;
+
+    return {
+      staff: detailed.staff,
+      assignment: detailed.assignment,
+    };
+  }
+
+  /**
+   * Find best staff member and keep every candidate score visible.
+   */
+  static findBestStaffWithTrace(
+    task: Task,
+    availableStaff: Staff[],
+    graph: Graph,
+    config: SimulationConfig,
+    tick: number,
+    priorityScore: number,
+    heapKey: number
+  ): { staff: Staff | null; assignment: Assignment | null; decision: AssignmentDecisionTrace } {
+    if (availableStaff.length === 0) {
+      return {
+        staff: null,
+        assignment: null,
+        decision: {
+          tick,
+          taskId: task.id,
+          taskType: task.type,
+          priorityScore,
+          heapKey,
+          selectedReason: 'No available staff under the current workload limits',
+          evaluations: [],
+        },
+      };
+    }
 
     let bestStaff: Staff | null = null;
     let bestScore = -Infinity;
     let bestAssignment: Assignment | null = null;
+    const evaluations: StaffEvaluationTrace[] = [];
 
     for (const staff of availableStaff) {
-      // Check capacity
-      if (staff.currentTasks.length >= config.maxWorkloadPerStaff) continue;
+      const skillDetails = this.calculateSkillMatchDetails(task.requiredSkills, staff.skills);
+      let eligible = true;
+      let rejectionReason: string | undefined;
 
-      // Calculate skill match
-      const skillMatch = this.calculateSkillMatch(task.requiredSkills, staff.skills);
+      if (staff.currentTasks.length >= config.maxWorkloadPerStaff) {
+        eligible = false;
+        rejectionReason = `Capacity full (${staff.currentTasks.length}/${config.maxWorkloadPerStaff})`;
+      } else if (skillDetails.score < config.skillStrictness) {
+        eligible = false;
+        rejectionReason = `Skill match ${Math.round(skillDetails.score * 100)}% is below strictness ${Math.round(config.skillStrictness * 100)}%`;
+      }
 
-      // Check skill strictness
-      if (skillMatch < config.skillStrictness) continue;
-
-      // Calculate distance
       const taskNodeId = graph.findNearestNode(task.location);
       const staffNodeId = graph.findNearestNode(staff.location);
 
-      let distance = 0;
+      let distance: number | null = null;
+      let distanceScore = 0;
+      let pathTrace;
       if (taskNodeId && staffNodeId) {
-        const path = graph.dijkstra(staffNodeId, taskNodeId);
-        distance = path ? path.distance : 999;
+        pathTrace = graph.dijkstraWithTrace(staffNodeId, taskNodeId);
+        distance = pathTrace.found && pathTrace.distance !== null ? pathTrace.distance : null;
       }
 
-      // Calculate combined score
-      // Higher skill match and lower distance = better
-      const distanceScore = 1 / (1 + distance * config.distanceWeight);
-      const score = (skillMatch * 100) + (distanceScore * 100);
+      if (eligible && distance === null) {
+        eligible = false;
+        rejectionReason = 'No reachable graph path from staff to task';
+      }
+
+      if (distance !== null) {
+        distanceScore = 1 / (1 + distance * config.distanceWeight);
+      }
+
+      const score = eligible
+        ? (skillDetails.score * 100) + (distanceScore * 100)
+        : 0;
+
+      evaluations.push({
+        staffId: staff.id,
+        staffName: staff.name,
+        eligible,
+        rejectionReason,
+        skillMatch: skillDetails.score,
+        matchedSkills: skillDetails.matchedSkills,
+        missingSkills: skillDetails.missingSkills,
+        distance,
+        distanceScore,
+        combinedScore: score,
+        pathTrace,
+        explanation: eligible
+          ? `Score = skill ${Math.round(skillDetails.score * 100)} + distance ${distanceScore.toFixed(2)} x 100 = ${score.toFixed(1)}`
+          : rejectionReason || 'Candidate rejected',
+      });
+
+      if (!eligible) continue;
 
       if (score > bestScore) {
         bestScore = score;
@@ -98,18 +196,47 @@ export class AllocationEngine {
         bestAssignment = {
           taskId: task.id,
           staffId: staff.id,
-          reason: this.generateAssignmentReason(skillMatch, distance),
-          travelDistance: distance,
-          skillMatch,
+          reason: this.generateAssignmentReason(skillDetails.score, distance ?? 999),
+          travelDistance: distance ?? 999,
+          skillMatch: skillDetails.score,
         };
       }
     }
 
-    if (!bestStaff || !bestAssignment) return null;
+    if (!bestStaff || !bestAssignment) {
+      return {
+        staff: null,
+        assignment: null,
+        decision: {
+          tick,
+          taskId: task.id,
+          taskType: task.type,
+          priorityScore,
+          heapKey,
+          selectedReason: 'Every candidate was rejected by capacity, skill, or path constraints',
+          evaluations,
+        },
+      };
+    }
+
+    const decision: AssignmentDecisionTrace = {
+      tick,
+      taskId: task.id,
+      taskType: task.type,
+      priorityScore,
+      heapKey,
+      selectedStaffId: bestStaff.id,
+      selectedStaffName: bestStaff.name,
+      selectedReason: bestAssignment.reason,
+      evaluations,
+    };
+
+    bestAssignment.trace = decision;
 
     return {
       staff: bestStaff,
       assignment: bestAssignment,
+      decision,
     };
   }
 
@@ -117,10 +244,29 @@ export class AllocationEngine {
    * Calculate how well staff skills match task requirements
    */
   private static calculateSkillMatch(requiredSkills: SkillType[], staffSkills: SkillType[]): number {
-    if (requiredSkills.length === 0) return 1.0;
+    return this.calculateSkillMatchDetails(requiredSkills, staffSkills).score;
+  }
+
+  private static calculateSkillMatchDetails(
+    requiredSkills: SkillType[],
+    staffSkills: SkillType[]
+  ): { score: number; matchedSkills: SkillType[]; missingSkills: SkillType[] } {
+    if (requiredSkills.length === 0) {
+      return {
+        score: 1.0,
+        matchedSkills: [],
+        missingSkills: [],
+      };
+    }
 
     const matchedSkills = requiredSkills.filter(req => staffSkills.includes(req));
-    return matchedSkills.length / requiredSkills.length;
+    const missingSkills = requiredSkills.filter(req => !staffSkills.includes(req));
+
+    return {
+      score: matchedSkills.length / requiredSkills.length,
+      matchedSkills,
+      missingSkills,
+    };
   }
 
   /**

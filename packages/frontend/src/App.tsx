@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useSocket } from './hooks/useSocket';
 import Header from './components/Header';
 import ControlPanel from './components/ControlPanel';
@@ -9,7 +8,7 @@ import DataStructureInspector from './components/DataStructureInspector';
 import MetricsPanel from './components/MetricsPanel';
 
 function App() {
-  const socket = useSocket();
+  useSocket();
 
   return (
     <div className="h-screen w-screen flex flex-col bg-dark-bg overflow-hidden">

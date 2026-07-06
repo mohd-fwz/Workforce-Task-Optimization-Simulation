@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 interface HeapNode {
   taskId: string;
   priority: number;
+  heapKey?: number;
 }
 
 interface HeapVisualizationProps {
@@ -89,10 +90,10 @@ export default function HeapVisualization({ data }: HeapVisualizationProps) {
     nodeGroups
       .append('circle')
       .attr('r', nodeRadius)
-      .attr('fill', (d, i) => (i === 0 ? '#6366f1' : '#3b82f6'))
+      .attr('fill', (_d, i) => (i === 0 ? '#6366f1' : '#3b82f6'))
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
-      .style('filter', (d, i) => (i === 0 ? 'drop-shadow(0 0 8px #6366f1)' : 'none'));
+      .style('filter', (_d, i) => (i === 0 ? 'drop-shadow(0 0 8px #6366f1)' : 'none'));
 
     nodeGroups
       .append('text')
@@ -101,10 +102,12 @@ export default function HeapVisualization({ data }: HeapVisualizationProps) {
       .attr('fill', 'white')
       .attr('font-size', '12px')
       .attr('font-weight', 'bold')
-      .text((d) => Math.round(d.data.priority));
+      .text((d) => d.data.priority.toFixed(1));
 
     // Add task ID tooltip
-    nodeGroups.append('title').text((d) => `Task: ${d.data.taskId}\nPriority: ${d.data.priority.toFixed(2)}`);
+    nodeGroups.append('title').text((d) => (
+      `Task: ${d.data.taskId}\nPriority score: ${d.data.priority.toFixed(2)}\nHeap key: ${d.data.heapKey?.toFixed(2) ?? 'N/A'}`
+    ));
   }, [data]);
 
   if (data.length === 0) {
@@ -120,7 +123,7 @@ export default function HeapVisualization({ data }: HeapVisualizationProps) {
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-gray-900">Priority Queue (Min Heap)</h3>
         <p className="text-xs text-gray-600 mt-1">
-          Top node = highest priority (lowest value) • Purple = root
+          Top node = highest computed priority • Heap key is the negative score so the min-heap extracts it first
         </p>
       </div>
       <svg ref={svgRef} className="w-full" height="400" />

@@ -5,9 +5,10 @@ import { GraphNode, GraphEdge } from '@workforce/shared';
 interface GraphVisualizationProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  highlightedPath?: string[];
 }
 
-export default function GraphVisualization({ nodes, edges }: GraphVisualizationProps) {
+export default function GraphVisualization({ nodes, edges, highlightedPath = [] }: GraphVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -24,7 +25,14 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
       source: edge.from,
       target: edge.to,
       distance: edge.distance,
-      travelTime: edge.travelTime
+      travelTime: edge.travelTime,
+      highlighted: highlightedPath.some((nodeId, index) => {
+        const nextNodeId = highlightedPath[index + 1];
+        return nextNodeId && (
+          (nodeId === edge.from && nextNodeId === edge.to) ||
+          (nodeId === edge.to && nextNodeId === edge.from)
+        );
+      }),
     }));
 
     // Create force simulation
@@ -48,9 +56,9 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
       .enter()
       .append('line')
       .attr('class', 'link')
-      .attr('stroke', '#6366f1')
-      .attr('stroke-width', 1.5)
-      .attr('opacity', 0.6);
+      .attr('stroke', (d) => d.highlighted ? '#f59e0b' : '#64748b')
+      .attr('stroke-width', (d) => d.highlighted ? 3 : 1.5)
+      .attr('opacity', (d) => d.highlighted ? 0.9 : 0.45);
 
     // Draw edge labels (show only for short distances to reduce clutter)
     const linkLabels = svg
@@ -145,7 +153,7 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
     return () => {
       simulation.stop();
     };
-  }, [nodes, edges]);
+  }, [nodes, edges, highlightedPath]);
 
   if (nodes.length === 0) {
     return (
@@ -176,6 +184,10 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-accent-red" />
           <span className="text-gray-600">Task</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 border-t-[3px] border-amber-500" />
+          <span className="text-gray-600">Shortest path</span>
         </div>
       </div>
 

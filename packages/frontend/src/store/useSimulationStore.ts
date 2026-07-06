@@ -3,7 +3,14 @@
  */
 
 import { create } from 'zustand';
-import { Task, Staff, SimulationConfig, GraphNode, GraphEdge } from '@workforce/shared';
+import {
+  Task,
+  Staff,
+  SimulationConfig,
+  GraphNode,
+  GraphEdge,
+  AlgorithmTrace,
+} from '@workforce/shared';
 
 interface SimulationStore {
   // State
@@ -11,9 +18,11 @@ interface SimulationStore {
   tasks: Task[];
   staff: Staff[];
   taskQueue: string[];
-  priorityQueue: Array<{ taskId: string; priority: number }>;
+  priorityQueue: Array<{ taskId: string; priority: number; heapKey?: number }>;
   graphNodes: GraphNode[];
   graphEdges: GraphEdge[];
+  algorithmTrace?: AlgorithmTrace;
+  selectedDijkstraStepIndex: number;
   config: SimulationConfig;
   metrics: {
     tasksCompleted: number;
@@ -30,9 +39,11 @@ interface SimulationStore {
   setTasks: (tasks: Task[]) => void;
   setStaff: (staff: Staff[]) => void;
   setTaskQueue: (queue: string[]) => void;
-  setPriorityQueue: (queue: Array<{ taskId: string; priority: number }>) => void;
+  setPriorityQueue: (queue: Array<{ taskId: string; priority: number; heapKey?: number }>) => void;
   setGraphNodes: (nodes: GraphNode[]) => void;
   setGraphEdges: (edges: GraphEdge[]) => void;
+  setAlgorithmTrace: (trace?: AlgorithmTrace) => void;
+  setSelectedDijkstraStepIndex: (index: number) => void;
   setConfig: (config: SimulationConfig) => void;
   setMetrics: (metrics: any) => void;
   setConnected: (connected: boolean) => void;
@@ -49,6 +60,8 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   priorityQueue: [],
   graphNodes: [],
   graphEdges: [],
+  algorithmTrace: undefined,
+  selectedDijkstraStepIndex: 0,
   config: {
     urgencyWeight: 0.7,
     distanceWeight: 0.3,
@@ -75,6 +88,8 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   setPriorityQueue: (priorityQueue) => set({ priorityQueue }),
   setGraphNodes: (graphNodes) => set({ graphNodes }),
   setGraphEdges: (graphEdges) => set({ graphEdges }),
+  setAlgorithmTrace: (algorithmTrace) => set({ algorithmTrace }),
+  setSelectedDijkstraStepIndex: (selectedDijkstraStepIndex) => set({ selectedDijkstraStepIndex }),
   setConfig: (config) => set({ config }),
   setMetrics: (metrics) => set({ metrics }),
   setConnected: (isConnected) => set({ isConnected }),
@@ -118,6 +133,14 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
 
     if (state.metrics) {
       update.metrics = state.metrics;
+    }
+
+    if (state.algorithmTrace) {
+      const previousTick = useSimulationStore.getState().algorithmTrace?.tick;
+      update.algorithmTrace = state.algorithmTrace;
+      if (previousTick !== state.algorithmTrace.tick) {
+        update.selectedDijkstraStepIndex = 0;
+      }
     }
 
     set(update);
