@@ -7,11 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        'dark-bg': '#0a0e1a',
-        'dark-surface': '#131826',
-        'dark-border': '#1f2937',
+        'dark-bg': '#f1f5f9',
+        'dark-surface': '#ffffff',
+        'dark-border': '#e2e8f0',
         'accent-blue': '#3b82f6',
-        'accent-purple': '#8b5cf6',
+        'accent-purple': '#6366f1',
         'accent-green': '#10b981',
         'accent-red': '#ef4444',
         'accent-yellow': '#f59e0b',

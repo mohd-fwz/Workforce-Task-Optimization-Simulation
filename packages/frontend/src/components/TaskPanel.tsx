@@ -61,25 +61,25 @@ export default function TaskPanel() {
       case 'assigned':
       case 'in-progress': return 'bg-accent-blue/20 text-accent-blue';
       case 'queued': return 'bg-accent-purple/20 text-accent-purple';
-      default: return 'bg-gray-700/20 text-gray-400';
+      default: return 'bg-gray-200 text-gray-600';
     }
   };
 
   return (
-    <div className="flex-1 bg-dark-surface rounded-lg border border-dark-border p-4 flex flex-col overflow-hidden">
+    <div className="flex-1 bg-dark-surface rounded-lg border border-dark-border shadow-sm p-4 flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-white">Tasks</h2>
+        <h2 className="text-lg font-bold text-gray-900">Tasks</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setShowGeneratorForm(!showGeneratorForm)}
-            className="bg-accent-purple hover:bg-purple-600 text-white p-2 rounded transition"
+            className="bg-accent-purple hover:bg-indigo-500 text-white p-2 rounded transition"
             title="Generate Random Tasks"
           >
             <Wand2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-accent-blue hover:bg-blue-600 text-white p-2 rounded transition"
+            className="bg-accent-blue hover:bg-blue-500 text-white p-2 rounded transition"
             title="Add Single Task"
           >
             <Plus className="w-4 h-4" />
@@ -96,47 +96,47 @@ export default function TaskPanel() {
             exit={{ height: 0, opacity: 0 }}
             className="bg-dark-bg rounded p-3 mb-4 overflow-hidden border-2 border-accent-purple/50"
           >
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <Wand2 className="w-4 h-4" />
               Generate Random Tasks
             </h3>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-400 w-24">Count:</label>
+                <label className="text-xs text-gray-600 w-24">Count:</label>
                 <input
                   type="number"
                   min="1"
                   max="100"
                   value={generatorConfig.taskCount}
                   onChange={(e) => setGeneratorConfig({ ...generatorConfig, taskCount: parseInt(e.target.value) || 15 })}
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-400 w-24">Center Lat:</label>
+                <label className="text-xs text-gray-600 w-24">Center Lat:</label>
                 <input
                   type="number"
                   step="0.0001"
                   value={generatorConfig.centerLat}
                   onChange={(e) => setGeneratorConfig({ ...generatorConfig, centerLat: parseFloat(e.target.value) || 40.7128 })}
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-400 w-24">Center Lng:</label>
+                <label className="text-xs text-gray-600 w-24">Center Lng:</label>
                 <input
                   type="number"
                   step="0.0001"
                   value={generatorConfig.centerLng}
                   onChange={(e) => setGeneratorConfig({ ...generatorConfig, centerLng: parseFloat(e.target.value) || -74.0060 })}
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-400 w-24">Radius:</label>
+                <label className="text-xs text-gray-600 w-24">Radius:</label>
                 <input
                   type="number"
                   step="0.01"
@@ -144,14 +144,14 @@ export default function TaskPanel() {
                   max="1"
                   value={generatorConfig.radius}
                   onChange={(e) => setGeneratorConfig({ ...generatorConfig, radius: parseFloat(e.target.value) || 0.1 })}
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
                 <span className="text-xs text-gray-500">~{Math.round((generatorConfig.radius || 0.1) * 111)} km</span>
               </div>
 
               <button
                 onClick={handleGenerateTasks}
-                className="bg-accent-purple hover:bg-purple-600 text-white px-3 py-2 rounded text-sm transition flex items-center justify-center gap-2"
+                className="bg-accent-purple hover:bg-indigo-500 text-white px-3 py-2 rounded text-sm transition flex items-center justify-center gap-2"
               >
                 <Wand2 className="w-4 h-4" />
                 Generate {generatorConfig.taskCount} Tasks
@@ -172,7 +172,7 @@ export default function TaskPanel() {
             className="bg-dark-bg rounded p-3 mb-4 overflow-hidden"
           >
             <div className="flex flex-col gap-2">
-              <select name="type" required className="bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm">
+              <select name="type" required className="bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm">
                 <option value="Medical">Medical</option>
                 <option value="Distribution">Distribution</option>
                 <option value="Survey">Survey</option>
@@ -183,7 +183,7 @@ export default function TaskPanel() {
               <input
                 name="skills"
                 placeholder="Skills (comma-separated)"
-                className="bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                className="bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
               />
 
               <div className="flex gap-2">
@@ -194,7 +194,7 @@ export default function TaskPanel() {
                   placeholder="Latitude"
                   defaultValue="40.7128"
                   required
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
                 <input
                   name="lng"
@@ -203,7 +203,7 @@ export default function TaskPanel() {
                   placeholder="Longitude"
                   defaultValue="-74.0060"
                   required
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
               </div>
 
@@ -216,7 +216,7 @@ export default function TaskPanel() {
                   placeholder="Urgency (1-10)"
                   defaultValue="5"
                   required
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
                 <input
                   name="duration"
@@ -225,13 +225,13 @@ export default function TaskPanel() {
                   placeholder="Duration (min)"
                   defaultValue="60"
                   required
-                  className="flex-1 bg-dark-surface border border-dark-border text-white px-2 py-1 rounded text-sm"
+                  className="flex-1 bg-dark-surface border border-dark-border text-gray-900 px-2 py-1 rounded text-sm"
                 />
               </div>
 
               <button
                 type="submit"
-                className="bg-accent-green hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition"
+                className="bg-accent-green hover:bg-green-500 text-white px-3 py-1 rounded text-sm transition"
               >
                 Create Task
               </button>
@@ -254,7 +254,7 @@ export default function TaskPanel() {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white text-sm">{task.type}</span>
+                    <span className="font-semibold text-gray-900 text-sm">{task.type}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(task.status)}`}>
                       {task.status}
                     </span>
@@ -268,7 +268,7 @@ export default function TaskPanel() {
                 </div>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="text-gray-400 hover:text-accent-red transition"
+                  className="text-gray-600 hover:text-accent-red transition"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -288,7 +288,7 @@ export default function TaskPanel() {
               )}
 
               {task.assignedStaffId && (
-                <div className="text-xs text-gray-400 mt-2">
+                <div className="text-xs text-gray-600 mt-2">
                   Assigned to: {task.assignedStaffId.slice(0, 8)}...
                 </div>
               )}

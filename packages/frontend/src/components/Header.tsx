@@ -5,16 +5,16 @@ export default function Header() {
   const { isConnected, tick, isRunning } = useSimulationStore();
 
   return (
-    <header className="bg-dark-surface border-b border-dark-border px-6 py-4">
+    <header className="bg-dark-surface border-b border-dark-border px-6 py-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Activity className="w-6 h-6 text-accent-blue" />
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-gray-900">
               Workforce Optimizer
             </h1>
           </div>
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-gray-600">
             NGO Emergency Response Dashboard
           </span>
         </div>
@@ -22,8 +22,8 @@ export default function Header() {
         <div className="flex items-center gap-6">
           {/* Tick counter */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Tick:</span>
-            <span className={`text-lg font-mono font-bold ${isRunning ? 'text-accent-green' : 'text-gray-400'}`}>
+            <span className="text-sm text-gray-600">Tick:</span>
+            <span className={`text-lg font-mono font-bold ${isRunning ? 'text-accent-green' : 'text-gray-600'}`}>
               {tick}
             </span>
           </div>

@@ -30,15 +30,15 @@ export default function ControlPanel() {
   };
 
   return (
-    <div className="bg-dark-surface rounded-lg border border-dark-border p-4 flex flex-col gap-4">
-      <h2 className="text-lg font-bold text-white">Control Panel</h2>
+    <div className="bg-dark-surface rounded-lg border border-dark-border shadow-sm p-4 flex flex-col gap-4">
+      <h2 className="text-lg font-bold text-gray-900">Control Panel</h2>
 
       {/* Playback controls */}
       <div className="flex gap-2">
         {isRunning ? (
           <button
             onClick={handlePause}
-            className="flex-1 bg-accent-yellow hover:bg-yellow-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
+            className="flex-1 bg-accent-yellow hover:bg-yellow-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
           >
             <Pause className="w-4 h-4" />
             Pause
@@ -46,7 +46,7 @@ export default function ControlPanel() {
         ) : (
           <button
             onClick={handleResume}
-            className="flex-1 bg-accent-green hover:bg-green-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
+            className="flex-1 bg-accent-green hover:bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
           >
             <Play className="w-4 h-4" />
             Resume
@@ -55,14 +55,14 @@ export default function ControlPanel() {
 
         <button
           onClick={handleStep}
-          className="bg-accent-blue hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
+          className="bg-accent-blue hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
         >
           <SkipForward className="w-4 h-4" />
         </button>
 
         <button
           onClick={handleReset}
-          className="bg-accent-red hover:bg-red-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
+          className="bg-accent-red hover:bg-red-500 text-white px-4 py-2 rounded flex items-center justify-center gap-2 transition"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
@@ -70,12 +70,12 @@ export default function ControlPanel() {
 
       {/* Configuration sliders */}
       <div className="flex flex-col gap-4 pt-4 border-t border-dark-border">
-        <h3 className="text-sm font-semibold text-gray-300">Parameters</h3>
+        <h3 className="text-sm font-semibold text-gray-700">Parameters</h3>
 
         {/* Urgency Weight */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
-            <label className="text-sm text-gray-400">Urgency Weight</label>
+            <label className="text-sm text-gray-600">Urgency Weight</label>
             <span className="text-sm text-accent-blue font-mono">{config.urgencyWeight.toFixed(2)}</span>
           </div>
           <input
@@ -92,7 +92,7 @@ export default function ControlPanel() {
         {/* Distance Weight */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
-            <label className="text-sm text-gray-400">Distance Weight</label>
+            <label className="text-sm text-gray-600">Distance Weight</label>
             <span className="text-sm text-accent-blue font-mono">{config.distanceWeight.toFixed(2)}</span>
           </div>
           <input
@@ -109,7 +109,7 @@ export default function ControlPanel() {
         {/* Skill Strictness */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
-            <label className="text-sm text-gray-400">Skill Strictness</label>
+            <label className="text-sm text-gray-600">Skill Strictness</label>
             <span className="text-sm text-accent-purple font-mono">{config.skillStrictness.toFixed(2)}</span>
           </div>
           <input
@@ -126,7 +126,7 @@ export default function ControlPanel() {
         {/* Max Workload */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
-            <label className="text-sm text-gray-400">Max Workload per Staff</label>
+            <label className="text-sm text-gray-600">Max Workload per Staff</label>
             <span className="text-sm text-accent-green font-mono">{config.maxWorkloadPerStaff}</span>
           </div>
           <input
@@ -143,7 +143,7 @@ export default function ControlPanel() {
         {/* Disaster Severity */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
-            <label className="text-sm text-gray-400">Disaster Severity</label>
+            <label className="text-sm text-gray-600">Disaster Severity</label>
             <span className="text-sm text-accent-red font-mono">{config.disasterSeverity.toFixed(1)}</span>
           </div>
           <input

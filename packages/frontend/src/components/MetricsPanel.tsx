@@ -32,8 +32,8 @@ export default function MetricsPanel() {
   ];
 
   return (
-    <div className="bg-dark-surface rounded-lg border border-dark-border p-4">
-      <h2 className="text-lg font-bold text-white mb-4">Metrics</h2>
+    <div className="bg-dark-surface rounded-lg border border-dark-border shadow-sm p-4">
+      <h2 className="text-lg font-bold text-gray-900 mb-4">Metrics</h2>
 
       <div className="grid grid-cols-4 gap-4">
         {metricItems.map((item, idx) => (
@@ -43,7 +43,7 @@ export default function MetricsPanel() {
           >
             <div className="flex items-center gap-2 mb-2">
               <item.icon className={`w-4 h-4 ${item.color}`} />
-              <span className="text-xs text-gray-400">{item.label}</span>
+              <span className="text-xs text-gray-600">{item.label}</span>
             </div>
             <div className={`text-2xl font-bold ${item.color}`}>
               {item.value}
@@ -53,7 +53,7 @@ export default function MetricsPanel() {
       </div>
 
       {metrics.averageResponseTime > 0 && (
-        <div className="mt-4 text-sm text-gray-400">
+        <div className="mt-4 text-sm text-gray-600">
           Avg Response Time: <span className="text-accent-blue font-mono">{metrics.averageResponseTime.toFixed(1)}</span> min
         </div>
       )}

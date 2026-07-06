@@ -48,9 +48,9 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
       .enter()
       .append('line')
       .attr('class', 'link')
-      .attr('stroke', '#374151')
-      .attr('stroke-width', 1) // Thinner lines for less clutter
-      .attr('opacity', 0.3); // More transparent for cleaner look
+      .attr('stroke', '#6366f1')
+      .attr('stroke-width', 1.5)
+      .attr('opacity', 0.6);
 
     // Draw edge labels (show only for short distances to reduce clutter)
     const linkLabels = svg
@@ -60,7 +60,7 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
       .append('text')
       .attr('class', 'link-label')
       .attr('font-size', '9px')
-      .attr('fill', '#6b7280')
+      .attr('fill', '#64748b')
       .attr('text-anchor', 'middle')
       .attr('opacity', 0.6) // Slightly transparent
       .text((d) => `${d.distance.toFixed(1)}km`);
@@ -118,8 +118,8 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
       .attr('dy', 25)
       .attr('font-size', '9px')
       .attr('font-weight', '500')
-      .attr('fill', '#d1d5db')
-      .style('text-shadow', '0 1px 2px rgba(0,0,0,0.8)') // Better readability
+      .attr('fill', '#334155')
+      .style('text-shadow', '0 1px 2px rgba(255,255,255,0.8)')
       .text((d) => d.location.label || d.id.slice(0, 8));
 
     // Add tooltips
@@ -158,8 +158,8 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-white">Location Graph</h3>
-        <p className="text-xs text-gray-400 mt-1">
+        <h3 className="text-sm font-semibold text-gray-900">Location Graph</h3>
+        <p className="text-xs text-gray-600 mt-1">
           Drag nodes to rearrange • Edge labels show distance
         </p>
       </div>
@@ -167,15 +167,15 @@ export default function GraphVisualization({ nodes, edges }: GraphVisualizationP
       <div className="flex gap-3 text-xs mb-3">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-accent-green" />
-          <span className="text-gray-400">Base</span>
+          <span className="text-gray-600">Base</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-accent-blue" />
-          <span className="text-gray-400">Staff</span>
+          <span className="text-gray-600">Staff</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-accent-red" />
-          <span className="text-gray-400">Task</span>
+          <span className="text-gray-600">Task</span>
         </div>
       </div>
 

@@ -74,7 +74,7 @@ export default function HeapVisualization({ data }: HeapVisualizationProps) {
       .attr('y1', (d) => d.source.y)
       .attr('x2', (d) => d.target.x)
       .attr('y2', (d) => d.target.y)
-      .attr('stroke', '#374151')
+      .attr('stroke', '#cbd5e1')
       .attr('stroke-width', 2);
 
     // Draw nodes
@@ -89,10 +89,10 @@ export default function HeapVisualization({ data }: HeapVisualizationProps) {
     nodeGroups
       .append('circle')
       .attr('r', nodeRadius)
-      .attr('fill', (d, i) => (i === 0 ? '#8b5cf6' : '#3b82f6'))
+      .attr('fill', (d, i) => (i === 0 ? '#6366f1' : '#3b82f6'))
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
-      .style('filter', (d, i) => (i === 0 ? 'drop-shadow(0 0 8px #8b5cf6)' : 'none'));
+      .style('filter', (d, i) => (i === 0 ? 'drop-shadow(0 0 8px #6366f1)' : 'none'));
 
     nodeGroups
       .append('text')
@@ -118,8 +118,8 @@ export default function HeapVisualization({ data }: HeapVisualizationProps) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-white">Priority Queue (Min Heap)</h3>
-        <p className="text-xs text-gray-400 mt-1">
+        <h3 className="text-sm font-semibold text-gray-900">Priority Queue (Min Heap)</h3>
+        <p className="text-xs text-gray-600 mt-1">
           Top node = highest priority (lowest value) • Purple = root
         </p>
       </div>

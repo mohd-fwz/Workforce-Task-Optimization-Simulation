@@ -19,8 +19,8 @@ export default function QueueVisualization({ data, tasks }: QueueVisualizationPr
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-white">Task Queue (FIFO)</h3>
-        <p className="text-xs text-gray-400 mt-1">
+        <h3 className="text-sm font-semibold text-gray-900">Task Queue (FIFO)</h3>
+        <p className="text-xs text-gray-600 mt-1">
           Tasks enter from right, exit from left
         </p>
       </div>
@@ -54,10 +54,10 @@ export default function QueueVisualization({ data, tasks }: QueueVisualizationPr
 
                     {task && (
                       <>
-                        <div className="text-xs font-semibold text-white text-center px-1 truncate w-full">
+                        <div className="text-xs font-semibold text-gray-900 text-center px-1 truncate w-full">
                           {task.type}
                         </div>
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="text-xs text-gray-600 mt-1">
                           U: {task.urgency}
                         </div>
                       </>
@@ -78,11 +78,11 @@ export default function QueueVisualization({ data, tasks }: QueueVisualizationPr
         {/* Details */}
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <div className="bg-dark-bg p-2 rounded">
-            <span className="text-gray-400">Size:</span>{' '}
+            <span className="text-gray-600">Size:</span>{' '}
             <span className="text-accent-blue font-mono">{data.length}</span>
           </div>
           <div className="bg-dark-bg p-2 rounded">
-            <span className="text-gray-400">Front:</span>{' '}
+            <span className="text-gray-600">Front:</span>{' '}
             <span className="text-accent-blue font-mono">{data[0]?.slice(0, 8) || 'N/A'}</span>
           </div>
         </div>

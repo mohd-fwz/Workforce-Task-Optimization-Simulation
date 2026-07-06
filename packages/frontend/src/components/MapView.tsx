@@ -47,20 +47,20 @@ export default function MapView() {
 
   return (
     <div className="relative w-full h-full">
-      <div className="absolute top-4 left-4 z-[1000] bg-dark-surface/90 backdrop-blur border border-dark-border rounded-lg p-3">
-        <h3 className="text-sm font-semibold text-white mb-2">Map Legend</h3>
+      <div className="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur border border-dark-border rounded-lg p-3 shadow-sm">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2">Map Legend</h3>
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-accent-green" />
-            <span className="text-gray-300">Base</span>
+            <span className="text-gray-600">Base</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-accent-blue" />
-            <span className="text-gray-300">Staff</span>
+            <span className="text-gray-600">Staff</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-accent-red" />
-            <span className="text-gray-300">Task Site</span>
+            <span className="text-gray-600">Task Site</span>
           </div>
         </div>
       </div>
@@ -91,9 +91,9 @@ export default function MapView() {
                   [fromNode.location.lat, fromNode.location.lng],
                   [toNode.location.lat, toNode.location.lng],
                 ]}
-                color="#374151"
-                weight={1}
-                opacity={0.4}
+                color="#6366f1"
+                weight={1.5}
+                opacity={0.55}
               />
             );
           }
@@ -147,7 +147,7 @@ export default function MapView() {
                     [assignedStaff.location.lat, assignedStaff.location.lng],
                     [task.location.lat, task.location.lng],
                   ]}
-                  color="#8b5cf6"
+                  color="#6366f1"
                   weight={2}
                   opacity={0.7}
                   dashArray="5, 10"
