@@ -2,7 +2,13 @@
  * Graph implementation for location management and pathfinding
  */
 
-import { GraphNode, GraphEdge, Location } from '@workforce/shared';
+import {
+  GraphNode,
+  GraphEdge,
+  Location,
+  DijkstraTrace,
+  DijkstraCandidateUpdate,
+} from '@workforce/shared';
 
 export class Graph {
   nodes: Map<string, GraphNode>;
@@ -69,13 +75,39 @@ export class Graph {
     path: string[];
     distance: number;
   } | null {
-    if (!this.nodes.has(startId) || !this.nodes.has(endId)) {
+    const trace = this.dijkstraWithTrace(startId, endId);
+    if (!trace.found || trace.distance === null) {
       return null;
+    }
+
+    return {
+      path: trace.finalPath,
+      distance: trace.distance,
+    };
+  }
+
+  /**
+   * Find shortest path and record each Dijkstra decision for visualization.
+   */
+  dijkstraWithTrace(startId: string, endId: string): DijkstraTrace {
+    const emptyTrace: DijkstraTrace = {
+      startNodeId: startId,
+      endNodeId: endId,
+      found: false,
+      distance: null,
+      finalPath: [],
+      steps: [],
+    };
+
+    if (!this.nodes.has(startId) || !this.nodes.has(endId)) {
+      return emptyTrace;
     }
 
     const distances = new Map<string, number>();
     const previous = new Map<string, string | null>();
     const unvisited = new Set<string>();
+    const visited = new Set<string>();
+    const steps: DijkstraTrace['steps'] = [];
 
     // Initialize
     for (const nodeId of this.nodes.keys()) {
@@ -86,7 +118,6 @@ export class Graph {
     distances.set(startId, 0);
 
     while (unvisited.size > 0) {
-      // Find node with minimum distance
       let currentId: string | null = null;
       let minDistance = Infinity;
 
@@ -98,26 +129,64 @@ export class Graph {
         }
       }
 
-      if (currentId === null || currentId === endId) break;
+      if (currentId === null || minDistance === Infinity) break;
 
       unvisited.delete(currentId);
+      visited.add(currentId);
 
-      // Update distances to neighbors
+      const candidateUpdates: DijkstraCandidateUpdate[] = [];
       const neighbors = this.adjacencyList.get(currentId);
-      if (neighbors) {
+
+      if (currentId !== endId && neighbors) {
         for (const [neighborId, edgeDistance] of neighbors) {
           if (unvisited.has(neighborId)) {
+            const previousDistance = distances.get(neighborId)!;
             const alt = distances.get(currentId)! + edgeDistance;
-            if (alt < distances.get(neighborId)!) {
+            const updated = alt < previousDistance;
+
+            if (updated) {
               distances.set(neighborId, alt);
               previous.set(neighborId, currentId);
             }
+
+            candidateUpdates.push({
+              neighborId,
+              edgeDistance,
+              previousDistance: previousDistance === Infinity ? null : previousDistance,
+              candidateDistance: alt,
+              updated,
+              reason: updated
+                ? `${currentId} offers a shorter route to ${neighborId}`
+                : `${neighborId} already has an equal or shorter known route`,
+            });
           }
         }
       }
+
+      const frontier = Array.from(unvisited)
+        .map(nodeId => ({
+          nodeId,
+          distance: distances.get(nodeId)!,
+          previousNodeId: previous.get(nodeId) ?? null,
+        }))
+        .filter(item => item.distance < Infinity)
+        .sort((a, b) => a.distance - b.distance);
+
+      steps.push({
+        step: steps.length + 1,
+        currentNodeId: currentId,
+        currentDistance: minDistance,
+        selectedReason: frontier.length > 0
+          ? `${currentId} has the smallest tentative distance among unvisited nodes`
+          : `${currentId} is the only reachable unvisited node`,
+        visitedNodeIds: Array.from(visited),
+        candidateUpdates,
+        frontier,
+      });
+
+      if (currentId === endId) break;
     }
 
-    // Reconstruct path
     const path: string[] = [];
     let current: string | null = endId;
 
@@ -127,12 +196,19 @@ export class Graph {
     }
 
     if (path[0] !== startId) {
-      return null; // No path found
+      return {
+        ...emptyTrace,
+        steps,
+      };
     }
 
     return {
-      path,
+      startNodeId: startId,
+      endNodeId: endId,
+      found: true,
       distance: distances.get(endId)!,
+      finalPath: path,
+      steps,
     };
   }
 

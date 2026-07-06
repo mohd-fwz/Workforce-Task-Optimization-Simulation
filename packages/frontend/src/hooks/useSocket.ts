@@ -33,7 +33,7 @@ export const useSocket = () => {
       updateState(state);
     });
 
-    socket.on('simulationTick', (tick) => {
+    socket.on('simulationTick', () => {
       // Optional: handle tick updates
     });
 
